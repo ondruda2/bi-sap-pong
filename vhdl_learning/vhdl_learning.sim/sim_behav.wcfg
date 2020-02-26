@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="sim_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="sim" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="3325215000fs"></ZoomStartTime>
+      <ZoomEndTime time="3515415001fs"></ZoomEndTime>
+      <Cursor1Time time="3375015000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="163"></NameColumnWidth>
+      <ValueColumnWidth column_width="108"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="8" />
+   <wvobject fp_name="/sim/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/x" type="array">
+      <obj_property name="ElementShortName">x[15:0]</obj_property>
+      <obj_property name="ObjectShortName">x[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/y" type="array">
+      <obj_property name="ElementShortName">y[15:0]</obj_property>
+      <obj_property name="ObjectShortName">y[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/hsyncout" type="logic">
+      <obj_property name="ElementShortName">hsyncout</obj_property>
+      <obj_property name="ObjectShortName">hsyncout</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/vsyncout" type="logic">
+      <obj_property name="ElementShortName">vsyncout</obj_property>
+      <obj_property name="ObjectShortName">vsyncout</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/r" type="array">
+      <obj_property name="ElementShortName">r[3:0]</obj_property>
+      <obj_property name="ObjectShortName">r[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/g" type="array">
+      <obj_property name="ElementShortName">g[3:0]</obj_property>
+      <obj_property name="ObjectShortName">g[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sim/dut/b" type="array">
+      <obj_property name="ElementShortName">b[3:0]</obj_property>
+      <obj_property name="ObjectShortName">b[3:0]</obj_property>
+   </wvobject>
+</wave_config>
