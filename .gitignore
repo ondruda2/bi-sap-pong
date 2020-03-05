@@ -13,3 +13,4 @@ vivado_*\.backup.log
 vivado_pid*\.str
 .Xil
 *\.ip_user_files/
+sim_[0-9]

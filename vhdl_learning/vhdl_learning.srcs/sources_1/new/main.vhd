@@ -6,57 +6,62 @@ entity main is
     port(
         clk : in std_logic;
         r, g, b : out std_logic_vector(3 downto 0);
-        hsyncout, vsyncout: out std_logic := '0'
+        hsyncout, vsyncout: out std_logic;
+        switches : in std_logic_vector(15 downto 0) := (4 => '1', others => '0')
     );
     
---Units: MHz
-    constant pixel_clock : real := 65.0;
+-- Pixel clock is estimated as 65 MHz
     
 --Pixels to clock cycles on Basys 3
     function mult(p : integer) return integer is
     begin
-        return integer(real(p)*100.0/pixel_clock);
+        return p * 100 / 65;
     end mult;
-    
---Units: mult([pixels]) -> [clocks]
-    constant hvis :integer:= mult(1024);
-    constant hfporch :integer:= mult(24);
-    constant hsync :integer:= mult(136);
-    constant hbporch :integer:= mult(160);
+--Clocks to pixels on Basys 3
+    function div(x : unsigned(15 downto 0)) return unsigned is
+    variable tmp : unsigned(31 downto 0);
+    begin
+        -- GCD(65,100)
+        tmp := x * 13 / 20;
+        return tmp(15 downto 0);
+    end div;
+
+--Units: pixels
+--    constant hvis :integer:= 1024;
+    constant hvis :integer:= 64;
+    constant hfporch :integer:= 24;
+    constant hsync :integer:= 136;
+    constant hbporch :integer:= 160;
 --Units: lines
-    constant vvis :integer:= 768;
+--    constant vvis :integer:= 768;
+    constant vvis :integer:= 64;
     constant vfporch :integer:= 3;
     constant vsync :integer:= 6;
     constant vbporch :integer:= 29;
+    
 end main;
 
 architecture synth of main is
+    signal griddiv : unsigned(15 downto 0) := unsigned(switches);
     signal x, y, frame: unsigned(15 downto 0) := (others => '0');
 begin
     pixel_output :process(clk)
-        variable tx, ty : unsigned(15 downto 0);
+        variable tx, ty, realx, gx, gy : unsigned(15 downto 0);
+        variable visible, output : std_logic;
     begin if rising_edge(clk) then
+        visible := '0';
         tx := x + 1;
-        ty := y + 1;
-        x <= tx;
-        r <= (others => '0');
-        g <= (others => '0');
-        b <= (others => '0');
-        hsyncout <= '0';
+        ty := y;
                     
-        if tx < hvis then
-            if y < vvis then
-                r <= std_logic_vector(x(8 downto 5));
-                g <= std_logic_vector(y(8 downto 5));
-                b <= std_logic_vector(frame(8 downto 5));
-            end if;
-        elsif tx < hvis + hfporch then
-        elsif tx < hvis + hfporch + hsync then
+        if tx < mult(hvis) then
+        elsif tx < mult(hvis + hfporch) then
             hsyncout <= '1';
-        elsif tx < hvis + hfporch + hsync  + hbporch then
+        elsif tx < mult(hvis + hfporch + hsync) then
+            hsyncout <= '0';
+        elsif tx < mult(hvis + hfporch + hsync  + hbporch) then
         else
-            x <= (others => '0');
-            y <= ty;
+            tx := (others => '0');
+            ty := y + 1;
             
             if ty < vvis then
             elsif ty < vvis + vfporch then
@@ -65,10 +70,30 @@ begin
             elsif ty < vvis + vfporch + vsync + vbporch then
                 vsyncout <= '0';
             else
-                y <= (others => '0');
+                ty := (others => '0');
                 frame <= frame + 1;
+                -- per-frame logic
             end if;
+            y <= ty;
         end if;
+        if tx < mult(hvis) and ty < vvis then
+            visible := '1';
+        end if;
+        x <= tx;
+        
+        -- per-pixel logic
+        realx := div(tx);
+        
+        gx := realx / griddiv;
+        gy := ty / griddiv;
+
+--        output := '1';        
+        output := gx(0) xor gy(0);
+--        output := '1' when gy = 0 or gy = shift_right(to_unsigned(vvis, 16), griddiv) else '0';       
+
+        r <= (others => visible and output);
+        g <= (others => visible and output);
+        b <= (others => visible and output);
     end if;
     end process;
 end synth;
