@@ -27,14 +27,14 @@ entity main is
     end div;
 
 --Units: pixels
---    constant hvis :integer:= 1024;
-    constant hvis :integer:= 64;
+    constant hvis :integer:= 1024;
+--    constant hvis :integer:= 64;
     constant hfporch :integer:= 24;
     constant hsync :integer:= 136;
     constant hbporch :integer:= 160;
 --Units: lines
---    constant vvis :integer:= 768;
-    constant vvis :integer:= 64;
+    constant vvis :integer:= 768;
+--    constant vvis :integer:= 64;
     constant vfporch :integer:= 3;
     constant vsync :integer:= 6;
     constant vbporch :integer:= 29;
@@ -43,50 +43,62 @@ end main;
 
 architecture synth of main is
     signal griddiv : unsigned(15 downto 0) := unsigned(switches);
-    signal x, y, frame: unsigned(15 downto 0) := (others => '0');
+    signal x, y, frame, divx: unsigned(15 downto 0) := (others => '0');
+    signal thblank, tvblank : std_logic;
 begin
     pixel_output :process(clk)
         variable tx, ty, realx, gx, gy : unsigned(15 downto 0);
         variable visible, output : std_logic;
+        variable hblank, vblank : std_logic;
     begin if rising_edge(clk) then
-        visible := '0';
+        hblank := thblank;
+        vblank := tvblank;
         tx := x + 1;
         ty := y;
-                    
-        if tx < mult(hvis) then
-        elsif tx < mult(hvis + hfporch) then
+        
+        if tx = mult(hvis) then
+            hblank := '1';            
+        elsif tx = mult(hvis + hfporch) then
             hsyncout <= '1';
-        elsif tx < mult(hvis + hfporch + hsync) then
+        elsif tx = mult(hvis + hfporch + hsync) then
             hsyncout <= '0';
-        elsif tx < mult(hvis + hfporch + hsync  + hbporch) then
-        else
+        elsif tx = mult(hvis + hfporch + hsync  + hbporch) then
+            hblank := '0';
             tx := (others => '0');
             ty := y + 1;
             
-            if ty < vvis then
-            elsif ty < vvis + vfporch then
-            elsif ty < vvis + vfporch + vsync then
+            if ty = vvis then
+                vblank := '1';
+            elsif ty = vvis + vfporch then 
                 vsyncout <= '1';
-            elsif ty < vvis + vfporch + vsync + vbporch then
+            elsif ty = vvis + vfporch + vsync then
                 vsyncout <= '0';
-            else
+            elsif ty = vvis + vfporch + vsync + vbporch then
+                vblank := '0';
                 ty := (others => '0');
                 frame <= frame + 1;
                 -- per-frame logic
             end if;
             y <= ty;
         end if;
-        if tx < mult(hvis) and ty < vvis then
+        if not hblank and not vblank then
             visible := '1';
         end if;
         x <= tx;
+        thblank <= hblank;
+        tvblank <= vblank;
         
         -- per-pixel logic
-        realx := div(tx);
+--        realx := div(tx);
+        realx := tx;
+                
+--        gx := realx / griddiv;
+--        gy := ty / griddiv;
+        gx := shift_right(realx, 4);
+        gy := shift_right(ty, 4);
         
-        gx := realx / griddiv;
-        gy := ty / griddiv;
-
+        divx <= gx;
+        
 --        output := '1';        
         output := gx(0) xor gy(0);
 --        output := '1' when gy = 0 or gy = shift_right(to_unsigned(vvis, 16), griddiv) else '0';       

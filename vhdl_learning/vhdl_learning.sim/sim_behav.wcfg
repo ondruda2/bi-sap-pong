@@ -10,13 +10,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="3325215000fs"></ZoomStartTime>
-      <ZoomEndTime time="3515415001fs"></ZoomEndTime>
-      <Cursor1Time time="3375015000fs"></Cursor1Time>
+      <ZoomStartTime time="986435000fs"></ZoomStartTime>
+      <ZoomEndTime time="988283001fs"></ZoomEndTime>
+      <Cursor1Time time="987235000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="163"></NameColumnWidth>
-      <ValueColumnWidth column_width="108"></ValueColumnWidth>
+      <ValueColumnWidth column_width="93"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="8" />
    <wvobject fp_name="/sim/clk" type="logic">
@@ -39,16 +39,16 @@
       <obj_property name="ElementShortName">vsyncout</obj_property>
       <obj_property name="ObjectShortName">vsyncout</obj_property>
    </wvobject>
-   <wvobject fp_name="/sim/dut/r" type="array">
-      <obj_property name="ElementShortName">r[3:0]</obj_property>
-      <obj_property name="ObjectShortName">r[3:0]</obj_property>
+   <wvobject fp_name="/sim/dut/divx" type="array">
+      <obj_property name="ElementShortName">divx[15:0]</obj_property>
+      <obj_property name="ObjectShortName">divx[15:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/sim/dut/g" type="array">
-      <obj_property name="ElementShortName">g[3:0]</obj_property>
-      <obj_property name="ObjectShortName">g[3:0]</obj_property>
+   <wvobject fp_name="/sim/dut/r[0]" type="logic">
+      <obj_property name="ElementShortName">[0]</obj_property>
+      <obj_property name="ObjectShortName">[0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/sim/dut/b" type="array">
-      <obj_property name="ElementShortName">b[3:0]</obj_property>
-      <obj_property name="ObjectShortName">b[3:0]</obj_property>
+   <wvobject fp_name="/sim/dut/dvis" type="logic">
+      <obj_property name="ElementShortName">dvis</obj_property>
+      <obj_property name="ObjectShortName">dvis</obj_property>
    </wvobject>
 </wave_config>
