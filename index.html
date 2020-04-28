@@ -1,0 +1,21 @@
+<html>
+
+<head>
+
+</head>
+
+<body style="background-color: aquamarine;">
+    <canvas id="canvas" style="background-color: azure; width: 100%; image-rendering: pixelated;"></canvas>
+    <!-- image-rendering: crisp-edges -->
+    <script>
+        var Module = {
+            canvas: (function () {
+                var canvas = document.getElementById('canvas');
+                return canvas;
+            })()
+        };
+    </script>
+    <script src="obj/pong.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+##########################################################################################################
+###	This is an example .gitignore file for Vivado, please treat it as an example as 
+###	it might not be complete. In addition, XAPP 1165 should be followed.
+##########################################################################################################
+
+*\.runs/
+*\.cache/
+#*\.hw/
+vivado.jou
+vivado.log
+vivado_*\.backup.jou
+vivado_*\.backup.log
+vivado_pid*\.str
+.Xil
+*\.ip_user_files/
+sim_[0-9]
