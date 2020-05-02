@@ -11,7 +11,7 @@ VERILATOR_SRC := \
 
 OBJ := obj
 
-CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -Os
+CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto
 
 VOUT := \
 	$(OBJ)/Vpong.cpp \
@@ -32,7 +32,7 @@ $(OBJ)/pong.v $(OBJ)/pong_cfg.h: pong.py
 	python3 pong.py generate_verilog
 
 $(VOUT) : $(OBJ)/pong.v
-	verilator $(OBJ)/pong.v --cc --clk clk -Mdir $(OBJ) || true
+	verilator $(OBJ)/pong.v --cc --clk clk -Mdir $(OBJ) --Wno-fatal
 
 $(DESIGN) : $(VOUT)
 	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@ $(filter %.cpp,$?)

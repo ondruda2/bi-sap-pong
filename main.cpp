@@ -49,6 +49,10 @@ EM_BOOL loop(double time, void*){
 }
 
 int main(){
+    top.reset = 1;
+    clk();
+    top.reset = 0;
+
     EM_ASM(
         canvas = document.getElementById("canvas");
         canvas.width = Module.vga_width;
