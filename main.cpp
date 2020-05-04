@@ -17,8 +17,6 @@ rgb frame[VGA_HEIGHT][VGA_WIDTH];
 
 Vpong top;
 
-int test EMSCRIPTEN_KEEPALIVE = 10;
-
 void clk(){
     top.clk = 0;
     top.eval();
@@ -27,8 +25,8 @@ void clk(){
 }
 
 EM_BOOL loop(double time, void*){
-    top.switches = 0;
-
+    top.switches = EM_ASM_INT({return Module.switches;});
+    
     for(int y = 0; y < VGA_HEIGHT; y++){
         for(int x = 0; x < VGA_WIDTH; x++){
             clk();
@@ -39,7 +37,7 @@ EM_BOOL loop(double time, void*){
     }
     for(int i = 0; i < VGA_EXTAR_FRAME_CLOCKS; i++)
         clk();
-
+        
     EM_ASM(
         image = new ImageData(new Uint8ClampedArray(Module.get_frame()), Module.vga_width, Module.vga_height);
         ctx.putImageData(image, 0, 0);

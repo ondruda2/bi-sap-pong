@@ -1,21 +1,88 @@
 <html>
-
 <head>
-
+<style>
+    #buttons {
+        display: flex;
+        width: 100%;
+    }
+    .button {
+        flex: auto;
+        background-color: cadetblue;
+        margin: 2px;
+        padding: 1px;
+        text-align: center;
+        border-radius: 5px;
+    }
+    .button[pressed='1'] {
+        background-color: aquamarine;
+    }
+</style>
 </head>
 
-<body style="background-color: aquamarine;">
-    <canvas id="canvas" style="background-color: azure; width: 100%; image-rendering: pixelated;"></canvas>
+<body style="background-color: #9893a5;">
+    <h1 style="background-color: cadetblue; border-radius: 10px; text-align: center;">Pong!</h1>
+    <canvas id="canvas" style="background-color: rgb(255, 0, 251); width: 100%; image-rendering: pixelated; text-align: center;">Something went wrong</canvas>
     <!-- image-rendering: crisp-edges -->
+    <div id="buttons">
+        <button class="button">Left UP</button>
+        <button class="button">Left DOWN</button>
+        <button class="button">E AI</button>
+        <button class="button">D AI</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">X</button>
+        <button class="button">E AI</button>
+        <button class="button">D AI</button>
+        <button class="button">Right UP</button>
+        <button class="button">Right DOWN</button>
+    </div>
+    <div>
+        Keybinds: 'q' = Left UP, 'a' = Left DOWN, 'p' = Right UP, 'l' = Right DOWN<br>
+        Source code: <a href="https://gitlab.fit.cvut.cz/ondruda2/bi-sap">https://gitlab.fit.cvut.cz/ondruda2/bi-sap</a><br>
+        Hosted by: 
+    </div>
     <script>
         var Module = {
-            canvas: (function () {
-                var canvas = document.getElementById('canvas');
-                return canvas;
-            })()
+            canvas: document.getElementById('canvas'),
+            switches : 0
         };
+        bts = document.getElementById('buttons')
+        buttons = Array.prototype.slice.call(bts.children)
+        function getidx(event){
+            return 15 - buttons.indexOf(event.target)
+        }
+        function chbutton(idx, down){
+            btn = buttons[15 - idx]
+            ps = Module.switches
+            if(down){
+                btn.setAttribute('pressed', '1')
+                Module.switches |= 1 << idx
+            } else{
+                btn.setAttribute('pressed', '0')
+                Module.switches &= ~(1 << idx)
+            }
+            // if(ps != Module.switches) console.log(Module.switches)
+        }
+        bts.onmousedown = (event) => {if(event.target != bts) chbutton(getidx(event), true)}
+        bts.onmouseup   = (event) => {if(event.target != bts) chbutton(getidx(event), false)}
+        function keybind(event, down){
+            binds = {
+                'q' : 15,
+                'a' : 14,
+                'p' : 1,
+                'l' : 0
+            }
+            if(event.key in binds)
+                chbutton(binds[event.key], down)
+        }
+        document.body.onkeydown = (e) => keybind(e, true)
+        document.body.onkeyup = (e) => keybind(e, false)
     </script>
     <script src="obj/pong.js"></script>
 </body>
-
 </html>

@@ -11,7 +11,8 @@ VERILATOR_SRC := \
 
 OBJ := obj
 
-CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto
+# CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions -Os
+CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions
 
 VOUT := \
 	$(OBJ)/Vpong.cpp \
@@ -22,11 +23,15 @@ VOUT := \
 RUNTIME := $(OBJ)/vl_runtime.bc
 DESIGN := $(OBJ)/vl_design.bc 
 
+#  -s SINGLE_FILE=1
 $(OBJ)/pong.js : $(RUNTIME) $(DESIGN) main.cpp $(VOUT) $(OBJ)/pong_cfg.h
-	emcc $(CXXFLAGS) $(CPPFLAGS) -s FILESYSTEM=0 -s WASM=1 -s SINGLE_FILE=1 --bind -o $(OBJ)/pong.js $(RUNTIME) $(DESIGN) main.cpp
+	emcc $(CXXFLAGS) $(CPPFLAGS) -s FILESYSTEM=0 -s WASM=1 --bind -o $(OBJ)/pong.js $(RUNTIME) $(DESIGN) main.cpp
 
-$(RUNTIME) : $(VERILATOR_SRC)
-	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@ $?
+$(OBJ) :
+	mkdir $(OBJ)
+
+$(RUNTIME) : $(VERILATOR_SRC) | $(OBJ)
+	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@  $(VERILATOR_SRC)
 
 $(OBJ)/pong.v $(OBJ)/pong_cfg.h: pong.py
 	python3 pong.py generate_verilog
@@ -34,5 +39,5 @@ $(OBJ)/pong.v $(OBJ)/pong_cfg.h: pong.py
 $(VOUT) : $(OBJ)/pong.v
 	verilator $(OBJ)/pong.v --cc --clk clk -Mdir $(OBJ) --Wno-fatal
 
-$(DESIGN) : $(VOUT)
-	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@ $(filter %.cpp,$?)
+$(DESIGN) : $(VOUT) | $(OBJ)
+	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@ $(filter %.cpp,$(VOUT))

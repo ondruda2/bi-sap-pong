@@ -17,7 +17,6 @@ class VgaConfig:
         self.vsync = vsync
         self.vbporch = vbporch
 
-
         self.a1 = hvis - 1
         self.a2 = hvis + hfporch - 1
         self.a3 = hvis + hfporch + hsync - 1
@@ -39,11 +38,27 @@ def pong(clk, reset, switches, outvsync, outhsync, outcolor, cfg : VgaConfig):
     x = Signal(intbv(0, 0, cfg.a4 + 1))
     y = Signal(intbv(0, 0, cfg.b4 + 1))
 
-    ballx = Signal(intbv(10, 0, 2**15))
-    bally = Signal(intbv(10, 0, 2**15))
-    balldx = Signal(intbv(0, -1, 2))
+    ballx = Signal(intbv(cfg.hvis // 2, 0, x.max*2))
+    bally = Signal(intbv(cfg.vvis // 2, 0, y.max*2))
+    balldx = Signal(intbv(-1, -1, 2))
     balldy = Signal(intbv(1, -1, 2))
+    ballx_nrbits = ballx._nrbits
+    ballsize = 5
+
+    paddleh = cfg.vvis // 4
+    paddle_ly = Signal(intbv(cfg.vvis//2, 0, cfg.vvis+1))
+    paddle_ry = Signal(intbv(cfg.vvis//2, 0, cfg.vvis+1))
+    paddle_lai = Signal(bool(0))
+    paddle_rai = Signal(bool(0))
+
     colldone = Signal(bool(0))
+    move_enable = Signal(bool(0))
+
+    lsfr = Signal(intbv(0, 0, 2**8))
+    @always_seq(clk.posedge, reset)
+    def random():
+        lsfr.next[8:] = lsfr[:1]
+        lsfr.next[7] = lsfr[7] ^ lsfr[5] ^ lsfr[4] ^ lsfr[3] ^ 1
 
     if cfg.pixel_clock == 100:
         pix_enable = True
@@ -64,23 +79,10 @@ def pong(clk, reset, switches, outvsync, outhsync, outcolor, cfg : VgaConfig):
                 accumulator.next = nacc[8:]
                 pix_enable.next = nacc[8]
     
-    # @block
-    # def paddle(clk, move_enable, up, down, drawout):
-    #     y = intbv(0, 0, scanx.max)
-
-    #     @always_seq(clk, None)
-    #     def move():
-    #         if move_enable:
-    #             if up and not down and y:
-    #                 y.next = y - 1
-    #             if down and not up and y < h:
-    #                 y.nexy = y + 1
-        
-    #     return instances()
-
     @always_seq(clk.posedge, reset)
     def mainloop():
         pixclock_feedback.next = 0
+        move_enable.next = 0
         if pix_enable:
             x.next = intbv(x + 1, 0, x.max)
             if x == cfg.a1:
@@ -110,9 +112,7 @@ def pong(clk, reset, switches, outvsync, outhsync, outcolor, cfg : VgaConfig):
                     "End vsync pulse"
                     vsyncout.next = 0
 
-                    ballx.next = ballx + balldx
-                    bally.next = bally + balldy
-                    colldone.next = 0
+                    move_enable.next = 1
                 if y == cfg.b4:
                     "End frame"
                     "Start vertically visible"
@@ -122,18 +122,89 @@ def pong(clk, reset, switches, outvsync, outhsync, outcolor, cfg : VgaConfig):
             if not hblank and not vblank:
                 top = y == 0
                 bottom = y == cfg.b1
-                # ball = x - ballx < 3 and y - bally < 3
                 tx = modbv(x - ballx, 0, 2**16)
                 ty = modbv(y - bally, 0, 2**16)
-                ball = tx < 5 and ty < 5
+                ball = tx < ballsize and ty < ballsize
+
+                pt_ly = modbv(y - paddle_ly, 0, 2**16)
+                left = x == 0 and pt_ly < paddleh and (not paddle_lai or y[0] == 1)
+
+                pt_ry = modbv(y - paddle_ry, 0, 2**16)
+                right = x == cfg.hvis-1 and pt_ry < paddleh and (not paddle_rai or y[0] == 1)
+
+                net = x == cfg.hvis//2 and y[2:] == 0
+
+                outcolor.next = top or bottom or ball or left or right or net
 
                 if not colldone and ball:
-                    colldone.next = 1
                     if top or bottom:
+                        colldone.next = 1
                         balldy.next = -balldy
+                    else:
+                        if left or right:
+                            colldone.next = 1
+                            balldx.next = -balldx
+                        if left:
+                            if y < paddle_ly + paddleh // 5:
+                                balldy.next = -1
+                            elif y > paddle_ly + (paddleh - paddleh // 5 - 3):
+                                balldy.next = 1
+                            else:
+                                balldy.next = 0
+                        elif right:
+                            if y < paddle_ry + paddleh // 5:
+                                balldy.next = -1
+                            elif y > paddle_ry + (paddleh - paddleh // 5 - 3):
+                                balldy.next = 1
+                            else:
+                                balldy.next = 0
+        
+        "Can be asserted multiple times per frame to allow faster movement"
+        if move_enable:
+            colldone.next = 0
 
-                outcolor.next = top or bottom or ball
-                
+            if ballx < x.max + 20 or ballx > 2**ballx_nrbits - 20:
+                ballx.next = ballx + balldx
+                bally.next = bally + balldy
+            else:
+                ballx.next = x.max // 2
+                bally.next = y.max // 2
+                balldx.next = -1 if lsfr[3] else 1
+                balldy.next = 1 if lsfr[1] else (-1 if lsfr[2] else 0)
+                # Testing: launch the ball straight left
+                # balldx.next = -1
+                # balldy.next = 0
+
+            if switches[13]:
+                paddle_lai.next = 1
+            if switches[12]:
+                paddle_lai.next = 0
+
+            if switches[3]:
+                paddle_rai.next = 1
+            if switches[2]:
+                paddle_rai.next = 0
+
+            lai = paddle_lai and ballx < cfg.hvis // 2
+            rai = paddle_rai and ballx > cfg.hvis // 2
+
+            if (switches[15] and not switches[14] 
+                or lai and bally + ballsize - 2 < paddle_ly) \
+                and paddle_ly > 1:
+                    paddle_ly.next = paddle_ly - 1
+            if (switches[14] and not switches[15] 
+                or lai and bally >= paddle_ly + paddleh - 1) \
+                and paddle_ly < cfg.vvis - paddleh:
+                    paddle_ly.next = paddle_ly + 1
+
+            if (switches[1] and not switches[0] 
+                or rai and bally + ballsize - 2 < paddle_ry) \
+                and paddle_ry > 1:
+                    paddle_ry.next = paddle_ry - 1
+            if (switches[0] and not switches[1] 
+                or rai and bally >= paddle_ry + paddleh - 1) \
+                and paddle_ry < cfg.vvis - paddleh:
+                    paddle_ry.next = paddle_ry + 1
 
     return instances()
 
@@ -155,8 +226,12 @@ if len(sys.argv) >= 2 and sys.argv[1] == 'generate_verilog':
     pong_inst = pong(clk, reset, switches, vsyncout, hsyncout, colout, cfg)
 
     os.makedirs("obj", exist_ok=True)
-    # pong_inst.convert("VHDL", std_logic_ports = True, path="obj")
-    pong_inst.convert("verilog", testbench = False, path="obj")
+    pong_inst.convert("VHDL", std_logic_ports = True, path="obj")
+    try:
+        pong_inst.convert("verilog", testbench = False, path="obj")
+    except:
+        os.remove("obj/pong.v")
+        raise
 
     with open("obj/pong_cfg.h", "w") as header:
         header.write(f"""#pragma once
