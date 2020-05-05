@@ -11,8 +11,8 @@ VERILATOR_SRC := \
 
 OBJ := obj
 
-# CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions -Os
-CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions
+CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions -Os
+# CXXFLAGS += -I$(VERILATOR_ROOT) -I$(VERILATOR_ROOT)/vltstd -Iout -flto -fno-exceptions
 
 VOUT := \
 	$(OBJ)/Vpong.cpp \
@@ -23,14 +23,22 @@ VOUT := \
 RUNTIME := $(OBJ)/vl_runtime.bc
 DESIGN := $(OBJ)/vl_design.bc 
 
-#  -s SINGLE_FILE=1
-$(OBJ)/pong.js : $(RUNTIME) $(DESIGN) main.cpp $(VOUT) $(OBJ)/pong_cfg.h
-	emcc $(CXXFLAGS) $(CPPFLAGS) -s FILESYSTEM=0 -s WASM=1 --bind -o $(OBJ)/pong.js $(RUNTIME) $(DESIGN) main.cpp
+OUT := $(OBJ)/pong.js $(OBJ)/pong.wasm
 
-$(OBJ) :
-	mkdir $(OBJ)
+.PHONY: all
+all: create_dirs $(OUT)
 
-$(RUNTIME) : $(VERILATOR_SRC) | $(OBJ)
+.PHONY: clean
+clean:
+	rm -r $(OBJ)
+
+.PHONY: create_dirs
+create_dirs: $(OBJ)
+
+$(OBJ): Makefile
+	mkdir -p $(OBJ)
+
+$(RUNTIME) : $(VERILATOR_SRC)
 	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@  $(VERILATOR_SRC)
 
 $(OBJ)/pong.v $(OBJ)/pong_cfg.h: pong.py
@@ -39,5 +47,10 @@ $(OBJ)/pong.v $(OBJ)/pong_cfg.h: pong.py
 $(VOUT) : $(OBJ)/pong.v
 	verilator $(OBJ)/pong.v --cc --clk clk -Mdir $(OBJ) --Wno-fatal
 
-$(DESIGN) : $(VOUT) | $(OBJ)
+$(DESIGN) : $(VOUT)
 	emcc $(CXXFLAGS) $(CPPFLAGS) -r -o $@ $(filter %.cpp,$(VOUT))
+
+#  -s SINGLE_FILE=1
+$(OUT) : $(RUNTIME) $(DESIGN) main.cpp $(VOUT) $(OBJ)/pong_cfg.h
+	emcc $(CXXFLAGS) $(CPPFLAGS) -s FILESYSTEM=0 -s WASM=1 --bind -o $(OBJ)/pong.js $(RUNTIME) $(DESIGN) main.cpp
+

@@ -208,11 +208,6 @@ def pong(clk, reset, switches, outvsync, outhsync, outcolor, cfg : VgaConfig):
 
     return instances()
 
-"""
-Todo:
-    build with lto and without exceptions and rtti
-"""
-
 clk = Signal(bool(0))
 reset = ResetSignal(0, active=1, isasync=False)
 switches = Signal(intbv(0)[16:])
